@@ -102,9 +102,12 @@ Section Semantic_Model.
   
   Definition At := Ensemble Atom. 
 
+  (** An empty schedule atom. *)
   Definition empty_atom : At :=
-    Singleton Atom (mk_Atom Emp_MS_ActEx (Singleton _ 0) (Empty_set nat) (Empty_not_in_0)).
+    Singleton Atom
+              (mk_Atom Emp_MS_ActEx (Singleton _ 0) (Empty_set nat) (Empty_not_in_0)).
 
+  (** A single action scheduling atom. *)
   Definition act_atom (a:Act)(t:nat) : At :=
     Singleton Atom
               (mk_Atom (Singleton_MS_ActEx a t 0) (Singleton _ 0) (Empty_set nat) (Empty_not_in_0)).
@@ -116,7 +119,8 @@ Section Semantic_Model.
     intros n H;inversion H;intro H2;apply H1;
       rewrite H2;constructor.
   Qed.
-    
+
+  (** Sequence of actions, prefixed by a timed action atom. *)
   Definition seq_atom (a:Act)(t:nat)(P:Atom) : At := 
     Singleton Atom ( 
                 AtomUnion (mk_Atom (Singleton_MS_ActEx a t 0)
@@ -125,21 +129,33 @@ Section Semantic_Model.
                                    (Sequence_Atom t))
                           (Atom_Offset_Map P t)).
 
-  Definition Offset_Atom (t:nat)(P:Atom) : At :=
-    fun _:nat =>
-      AtomUnion (mk_Atom Emp_MS_ActEx
-                         (Singleton _ 0)
-                         (Setminus nat (Singleton nat t) (Singleton nat 0))
-                         (Sequence_Atom t))
-                     (Atom_Offset_Map P t).
+
+  Definition offset_atom (t:nat)(P:Atom) : At :=
+    Singleton Atom (
+                AtomUnion (mk_Atom Emp_MS_ActEx
+                                   (Singleton _ 0)
+                                   (Setminus nat (Singleton nat t) (Singleton nat 0))
+                                   (Sequence_Atom t))
+                          (Atom_Offset_Map P t)).
   
-  Definition Delay_Atom (P:Atom) : At :=
-    fun t:nat =>
-      AtomUnion (mk_Atom Emp_MS_ActEx
-                         (Singleton _ 0)
-                         (Empty_set nat)
-                         Empty_not_in_0)
-                (Atom_Offset_Map P t).
+  Inductive Delay_Atom (P:Atom) : At :=
+  | delay_atom: forall t:nat,
+      Ensembles.In _ (Delay_Atom P) (AtomUnion (mk_Atom Emp_MS_ActEx
+                                              (Singleton _ 0)
+                                              (Empty_set nat)
+                                              Empty_not_in_0)
+                                               (Atom_Offset_Map P t)).
+
+  Inductive Elim_Delay_Atom (P:At) : At :=
+  | elim_delay_atom :
+      forall a, Ensembles.In _ P a -> Strict_Included _ (st_fin_times a) (anchors a) ->
+           Ensembles.In _ (Elim_Delay_Atom P) a.
+
+  Definition union_atom (a b:At) : At :=
+    Union Atom a b.
+
+  
+                                      
 
   
   
