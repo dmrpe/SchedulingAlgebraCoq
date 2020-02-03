@@ -1,7 +1,7 @@
 (** * Semantic domain of Schedule Algebra *)
 
-From Coq.Arith Require Import EqNat.
-From Coq.Sets  Require Import Ensembles Image.
+From Coq.Arith  Require Import EqNat.
+From Coq.Sets   Require Import Ensembles Image.
 From Containers Require Import Maps.
 
 Require Export List.
@@ -9,7 +9,7 @@ Import ListNotations.
 
 Require Import Omega.
 
-Require Import SchedAlgebraSyntax.
+Require Import Actions.
 
 Generalizable All Variables.
 
@@ -26,7 +26,8 @@ Proof.
   decide equality.
   apply eq_nat_dec.
   apply eq_nat_dec.
-  apply Action_Eq_Dec.
+  auto with typeclass_instances.
+  apply Action_eq_dec.
 Qed.
 
 Definition Bta_lt (a1 a2 : Bta) : Prop :=
@@ -185,24 +186,25 @@ Proof.
       - case_eq(_cmp (stt x) (stt y));intros.
         * rewrite H0, H1, H2 in H. elim H.
         * red. right. right.
-          split. apply compare_2 in H0. auto.
+          split. apply compare_2 in H0. red in H0. simpl in H0.
+          inversion_clear H0;auto.
           split; apply compare_2 in H1. auto.
           apply compare_1 in H2. auto.
         * rewrite H0, H1, H2 in H. elim H.
       - right. left. split.
         * apply compare_2 in H0.
-          assumption.
+          inversion_clear H0;auto.
         * apply compare_1 in H1. assumption.
       -  rewrite H0, H1 in H. elim H.
     }
   + left.
     case_eq(act x);case_eq(act y);intros.
     subst. rewrite H1, H2 in H0. simpl in H0. discriminate.
-    simpl. auto.
+    simpl. apply compare_1 in H0. rewrite H1, H2 in H0.  auto. 
     rewrite H1, H2 in H0. simpl in H0. discriminate.
     rewrite H1, H2 in H0.
     simpl in H0.
-    simpl.
+    constructor.
     apply nat_compare_lt in H0. assumption.
   + rewrite H0 in H.
     elim H.
@@ -224,7 +226,7 @@ Proof.
   + unfold Bta_lt.
     destruct H1.
     assert(_cmp (act x) (act y) = Eq).
-    apply elim_compare_eq. auto.
+    apply elim_compare_eq. red. rewrite H. auto.
     rewrite H1.
     assert(_cmp (dur x) (dur y) = Lt).
     unfold _cmp. simpl.
@@ -235,15 +237,15 @@ Proof.
     assert(_cmp (act x) (act y) = Eq).
     apply elim_compare_eq. auto.
     assert(_cmp (dur x) (dur y) = Eq).
-    apply elim_compare_eq. auto.
+    apply elim_compare_eq. rewrite H1;reflexivity.
+    rewrite H. reflexivity.
     unfold Bta_lt.
-    rewrite H0,H3.
+    rewrite H0,H1.
     assert(_cmp (stt x) (stt y) = Lt).
-    unfold _cmp. simpl.
-    apply nat_compare_lt in H2.
-    auto.
-    rewrite H4.
-    auto.
+    apply elim_compare_lt. auto.
+    assert(_cmp (dur y) (dur y) = Eq).
+    apply elim_compare_eq. reflexivity.
+    rewrite H4, H3. trivial.
 Qed.
 
 Definition Bta_Gt (a1 a2 : Bta) : Prop :=
@@ -262,26 +264,22 @@ Proof.
         * rewrite H0, H1, H2 in H. elim H.
         * rewrite H0, H1, H2 in H. elim H.
         * red. right. right.
-          split. split.  apply compare_2 in H0. auto.
+          split. split.  apply compare_2 in H0. inversion_clear H0.
+          reflexivity.
+          f_equal. auto.
           apply compare_2 in H1. auto.
           apply compare_3 in H2. auto.
       - rewrite H0, H1 in H. elim H.
       - right. left. split.
         * apply compare_2 in H0.
-          assumption.
+          inversion_clear H0;auto.
         * apply compare_3 in H1. assumption.
     }
   + rewrite H0 in H. elim H.
   + left.
-    case_eq(act x);case_eq(act y);intros.
-    rewrite H1, H2 in H0. simpl in H0. discriminate.
-    rewrite H1, H2 in H0. simpl in H0. discriminate.
-    rewrite H1, H2 in H0.
-    simpl. auto.
-    rewrite H1, H2 in H0.
+    apply Action_lt_imp_gt.
     apply compare_3 in H0.
-    unfold Action_gt.
-    auto.
+    order.
 Qed.
 
 Lemma Bta_Gt_imp_Bta_gt:
@@ -301,7 +299,7 @@ Proof.
   + unfold Bta_gt.
     destruct H2.
     assert(_cmp (act x) (act y) = Eq).
-    apply elim_compare_eq. auto.
+    apply elim_compare_eq. rewrite H. reflexivity. 
     rewrite H1.
     assert(_cmp (dur x) (dur y) = Gt).
     unfold _cmp. simpl.
@@ -310,7 +308,7 @@ Proof.
     rewrite H2. auto.
   + destruct H3. destruct H. 
     assert(_cmp (act x) (act y) = Eq).
-    apply elim_compare_eq. auto.
+    apply elim_compare_eq. rewrite H;auto.
     assert(_cmp (dur x) (dur y) = Eq).
     apply elim_compare_eq. auto.
     unfold Bta_gt.
@@ -465,7 +463,7 @@ Proof.
             apply compare_2 in H1. red in H1. red in H1. simpl in H1 . 
             apply compare_2 in H2. red in H2. red in H2. simpl in H2 .
             destruct x. destruct y.
-            simpl in *.
+            simpl in *. apply Action_eq_impl_eq in H0. 
             rewrite H0. rewrite H1. rewrite H2. auto.
           * intro.
             rewrite H2 in H. auto.
@@ -547,6 +545,9 @@ Instance Bta_Ordered: OrderedType Bta :=
     _cmp := Bta_cmp
   |}.
 Proof. apply Bta_cmp_spec. Defined.
+
+Definition Bta_off (a:Bta)(t:nat) : Bta :=
+  mk_Bta (act a) (dur a) (stt a + t).
 
 
 

@@ -1,0 +1,8 @@
+-R Theories/ SA
+-arg -w
+-arg all
+Theories/Actions.v
+Theories/Btas.v
+Theories/MBta.v
+Theories/Syntax.v
+Theories/Schedules.v
