@@ -29,13 +29,12 @@ Axiom mBta_union_inv :
     exists n1, find x m1 = Some n1 -> exists n2, find x m2 = Some n2 -> n = n1 + n2.
     
 
-Definition Offset_MS_ActEx (s : m_eAction) (t : nat) : m_eAction :=
-  let f := (s) in
-  
-  Bag (fun x : eAction => if f x >= 1 then
-                         0
+Parameter mBta_offset : mBta -> nat ->  mBta.
 
-         f (eAction_off x t)match eAction_eq_dec (eAction_off a t) x with
-                       | left _ => multiplicity a
-                       | right _ => 0
-                       end).
+Axiom mBta_offset_correct :
+  forall x m n k,
+    find x m1 = Some n ->
+    
+.
+
+Axiom mBta_offset_inv : .
