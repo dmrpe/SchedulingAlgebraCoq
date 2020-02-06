@@ -44,5 +44,7 @@ Definition msingleton (A:Type) {H:OrderedType A} (x:A) : Multiset A.
   abstract(intros;eapply msingleton_aux;eauto).
 Defined.
 
+Definition munion (A:Type) {H:OrderedType A} (m1 m2 : Multiset A) : Multiset A.
+
 
 Print msingleton.
